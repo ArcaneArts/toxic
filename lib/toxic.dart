@@ -1,0 +1,34 @@
+library toxic;
+
+import 'package:toxic/extensions/string.dart';
+
+export 'package:toxic/extensions/date_time.dart';
+export 'package:toxic/extensions/double.dart';
+export 'package:toxic/extensions/future.dart';
+export 'package:toxic/extensions/int.dart';
+export 'package:toxic/extensions/iterable.dart';
+export 'package:toxic/extensions/iterable_double.dart';
+export 'package:toxic/extensions/iterable_future.dart';
+export 'package:toxic/extensions/iterable_int.dart';
+export 'package:toxic/extensions/list.dart';
+export 'package:toxic/extensions/list_stream.dart';
+export 'package:toxic/extensions/map.dart';
+export 'package:toxic/extensions/num.dart';
+export 'package:toxic/extensions/object.dart';
+export 'package:toxic/extensions/random.dart';
+export 'package:toxic/extensions/set.dart';
+export 'package:toxic/extensions/stream.dart';
+export 'package:toxic/extensions/string.dart';
+export 'package:toxic/extensions/uint8list.dart';
+export 'package:toxic/util/charcodec.dart';
+export 'package:toxic/util/charsets.dart';
+export 'package:toxic/util/golden.dart';
+export 'package:toxic/util/multiplexer.dart';
+export 'package:toxic/util/oil.dart';
+export 'package:toxic/util/ssss.dart';
+
+void main() {
+  Map<String, String> e = "library/abc/member/123"
+      .extractPathPattern("library/:library/member/:member");
+  print(e);
+}
