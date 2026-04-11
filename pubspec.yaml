@@ -7,3 +7,6 @@ environment:
 dependencies:
   intl: any
   rxdart: any
+dev_dependencies:
+  flutter_lints: any
+  test: any

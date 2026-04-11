@@ -1,6 +1,105 @@
 import 'dart:math';
 import 'dart:typed_data';
 
+import 'package:toxic/toxic.dart';
+
+class SecretShare {
+  Uint8List? _secret;
+  int? _threshold;
+  int? _seed;
+  Iterable<Uint8List>? _shares;
+
+  SecretShare randomSeed() {
+    _seed = null;
+    return this;
+  }
+
+  SecretShare seedInt(int seed) {
+    _seed = seed;
+    return this;
+  }
+
+  SecretShare seedString(String seed) => seedInt(seed.hashCode);
+
+  SecretShare secretBytes(Uint8List secretBytes) {
+    if (secretBytes.isEmpty) {
+      throw Exception('Secret cannot be empty');
+    }
+    _secret = secretBytes;
+    return this;
+  }
+
+  SecretShare setShares(Iterable<Uint8List> shares) {
+    if (shares.isEmpty) {
+      throw Exception('Shares cannot be empty');
+    }
+    _shares = shares;
+    return this;
+  }
+
+  SecretShare setSharesAsBase64(Iterable<String> shares) =>
+      setShares(shares.map((s) => s.decodedBase64));
+
+  SecretShare setSharesAsHex(Iterable<String> shares) =>
+      setShares(shares.map((s) => s.decodedHex));
+
+  SecretShare secretString(String secret) =>
+      secretBytes(Uint8List.fromList(secret.codeUnits));
+
+  SecretShare threshold(int t) {
+    if (t < 1 || t > 255) {
+      throw Exception('Threshold must be between 1 and 255');
+    }
+    _threshold = t;
+    return this;
+  }
+
+  SecretShare buildShares() {
+    if (_secret == null) {
+      throw Exception('Secret not set');
+    }
+    if (_threshold == null) {
+      throw Exception('Threshold not set');
+    }
+
+    _shares = SSSS.encodeShares(
+      secretBytes: _secret!,
+      threshold: _threshold!,
+      seed: _seed,
+    );
+
+    return this;
+  }
+
+  SecretShare buildSecret() {
+    if (_shares == null) {
+      throw Exception('Shares not built');
+    }
+    _secret = SSSS.decodeSSS(_shares!.toList());
+    return this;
+  }
+
+  Uint8List getSecret() {
+    if (_shares == null) {
+      buildSecret();
+    }
+    return SSSS.decodeSSS(_shares!.toList());
+  }
+
+  String getSecretAsString() => String.fromCharCodes(getSecret());
+
+  Iterable<Uint8List> getShares() {
+    if (_shares == null) {
+      buildShares();
+    }
+    return _shares!;
+  }
+
+  Iterable<String> getSharesAsBase64() => getShares().map((s) => s.base64);
+
+  Iterable<String> getSharesAsHex() => getShares().map((s) => s.hex);
+}
+
 class SSSS {
   const SSSS._();
 
@@ -27,9 +126,7 @@ class SSSS {
       coefficients.add(bb.takeBytes());
     }
 
-    int shareIndex = 0;
-    while (shareIndex < 256) {
-      shareIndex++;
+    for (int shareIndex = 1; shareIndex <= 255; shareIndex++) {
       bb.addByte(shareIndex);
       for (int j = 0; j < secretBytes.length; j++) {
         bb.addByte(evaluate(coefficients[j], shareIndex));
@@ -40,9 +137,9 @@ class SSSS {
   }
 
   static Uint8List decodeSSS(List<Uint8List> parts) {
-    if (parts.length < 1) throw Exception('No parts provided');
+    if (parts.isEmpty) throw Exception('No parts provided');
     int shareLen = parts[0].length;
-    if (shareLen < 2) throw Exception('Invalid share length');
+    if (shareLen < 1) throw Exception('Invalid share length');
     BytesBuilder bb = BytesBuilder();
     List<int> xs = [];
     List<List<int>> ys = [];
@@ -89,9 +186,9 @@ int _gfMult(int a, int b) {
     if ((b & 1) == 1) {
       product ^= a;
     }
-    bool hi_bit_set = (a & 0x80) != 0;
+    bool hiBitSet = (a & 0x80) != 0;
     a = (a << 1) & 0xFF;
-    if (hi_bit_set) {
+    if (hiBitSet) {
       a ^= _primitivePoly;
     }
     b >>= 1;
@@ -132,11 +229,11 @@ int _computeLi0(int i, List<int> xs) {
     if (jj == i) continue;
     int xj = xs[jj];
     int xi = xs[i];
-    int num_term = xj;
+    int numTerm = xj;
     int den = _gfAdd(xi, xj);
     if (den == 0) throw Exception('Duplicate x values');
-    int inv_den = _gfInverse(den);
-    prod = _gfMult(prod, _gfMult(num_term, inv_den));
+    int invDen = _gfInverse(den);
+    prod = _gfMult(prod, _gfMult(numTerm, invDen));
   }
   return prod;
 }
